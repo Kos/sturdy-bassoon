@@ -1,3 +1,5 @@
-import sayHello from "./hello";
+import Renderer from "./renderer";
 
-document.getElementById("root").innerHTML = sayHello();
+new Renderer({
+  target: document.getElementById("root")
+});
