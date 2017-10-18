@@ -1,5 +1,3 @@
-import sayHello from './hello';
+import sayHello from "./hello";
 
-document.getElementById('root').innerHTML = sayHello();
-
-
+document.getElementById("root").innerHTML = sayHello();
