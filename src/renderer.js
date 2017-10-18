@@ -1,3 +1,5 @@
+import helloShader from "./shaders/hello.glsl";
+
 export default class Renderer {
   constructor({ target, width = 800, height = 600 }) {
     this.nextRender = this.nextRender.bind(this);
@@ -5,6 +7,7 @@ export default class Renderer {
     this.gl = this.createContext();
     window.requestAnimationFrame(this.nextRender);
     this.b = 0;
+    window.console.log(helloShader);
   }
 
   createCanvas(target, width, height) {
