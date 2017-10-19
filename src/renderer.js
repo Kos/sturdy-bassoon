@@ -1,5 +1,4 @@
-import vertexShader from "./shaders/vertex.glsl";
-import fragmentShader from "./shaders/fragment.glsl";
+import * as shaders from "./shaders";
 import { initBuffer } from "./utils/buffers";
 import { initShaderProgram } from "./utils/shaders";
 
@@ -40,14 +39,18 @@ export default class Renderer {
     this.setupShaders();
 
     const that = this;
-    module.hot.accept("./shaders/fragment.glsl", function() {
+    module.hot.accept("./shaders", function() {
       that.setupShaders();
     });
   }
 
   setupShaders() {
     const { gl } = this;
-    const shaderProgram = initShaderProgram(gl, vertexShader, fragmentShader);
+    const shaderProgram = initShaderProgram(
+      gl,
+      shaders.vertex,
+      shaders.fragment
+    );
     gl.useProgram(shaderProgram);
     const location = gl.getAttribLocation(shaderProgram, "aVertexPosition");
     gl.bindBuffer(gl.ARRAY_BUFFER, this.tmp_buffer);
