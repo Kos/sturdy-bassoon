@@ -4,7 +4,10 @@ const Merge = require("webpack-merge");
 const CommonConfig = require("./webpack.common.js");
 
 module.exports = Merge(CommonConfig, {
-  plugins: [new webpack.HotModuleReplacementPlugin()],
+  plugins: [
+    new webpack.NamedModulesPlugin(),
+    new webpack.HotModuleReplacementPlugin()
+  ],
   devServer: {
     publicPath: "/",
     port: 9000,

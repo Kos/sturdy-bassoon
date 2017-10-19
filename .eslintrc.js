@@ -12,6 +12,7 @@ module.exports = {
     sourceType: "module"
   },
   rules: {
-    "prettier/prettier": "warn"
+    "prettier/prettier": "warn",
+    "no-console": 0
   }
 };
