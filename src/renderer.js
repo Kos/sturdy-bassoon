@@ -1,17 +1,31 @@
 import * as shaders from "./shaders";
 import { initBuffer } from "./utils/buffers";
 import { initShaderProgram } from "./utils/shaders";
+import Scene from "./scene";
 
 export default class Renderer {
   constructor({ target, width = 800, height = 600 }) {
-    this.nextRender = this.nextRender.bind(this);
-    this.canvas = this.createCanvas(target, width, height);
-    this.gl = this.createContext();
-    window.requestAnimationFrame(() => this.setup());
-    window.requestAnimationFrame(this.nextRender);
+    this._nextRender = this._nextRender.bind(this);
+    this.canvas = this._createCanvas(target, width, height);
+    this.gl = this._createContext();
+    this.scene = new Scene();
+    window.requestAnimationFrame(() => this._setup());
+    window.requestAnimationFrame(this._nextRender);
   }
 
-  createCanvas(target, width, height) {
+  setOrthoProjection(w, h) {
+    // TODO
+  }
+
+  updateMeshes(meshes) {
+    // TODO
+  }
+
+  getCurrentScene() {
+    return this.scene;
+  }
+
+  _createCanvas(target, width, height) {
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -19,7 +33,7 @@ export default class Renderer {
     return canvas;
   }
 
-  createContext() {
+  _createContext() {
     const gl = this.canvas.getContext("experimental-webgl");
     if (!gl) {
       throw new Error("Cannot create webgl context");
@@ -27,24 +41,19 @@ export default class Renderer {
     return gl;
   }
 
-  nextRender() {
-    this.render();
-    window.requestAnimationFrame(this.nextRender);
-  }
-
-  setup() {
+  _setup() {
     const { gl } = this;
     this.tmp_buffer = initBuffer(gl);
 
-    this.setupShaders();
+    this._setupShaders();
 
     const that = this;
     module.hot.accept("./shaders", function() {
-      that.setupShaders();
+      that._setupShaders();
     });
   }
 
-  setupShaders() {
+  _setupShaders() {
     const { gl } = this;
     const shaderProgram = initShaderProgram(
       gl,
@@ -58,7 +67,12 @@ export default class Renderer {
     gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
   }
 
-  render() {
+  _nextRender() {
+    this._render();
+    window.requestAnimationFrame(this._nextRender);
+  }
+
+  _render() {
     const { gl } = this;
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
