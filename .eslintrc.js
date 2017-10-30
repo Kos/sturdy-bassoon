@@ -13,6 +13,7 @@ module.exports = {
   },
   rules: {
     "prettier/prettier": "warn",
-    "no-console": 0
+    "no-console": 0,
+    "no-debugger": 0
   }
 };

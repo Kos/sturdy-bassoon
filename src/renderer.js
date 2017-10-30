@@ -2,6 +2,7 @@ import * as shaders from "./shaders";
 import { initBuffer } from "./utils/buffers";
 import { initShaderProgram } from "./utils/shaders";
 import Scene from "./scene";
+import { mat4 } from "gl-matrix";
 
 export default class Renderer {
   constructor({ target, width = 800, height = 600 }) {
@@ -9,16 +10,27 @@ export default class Renderer {
     this.canvas = this._createCanvas(target, width, height);
     this.gl = this._createContext();
     this.scene = new Scene();
+    this.meshes = {};
+    this.projectionMatrix = mat4.create();
+    this.shaderContext = null;
     window.requestAnimationFrame(() => this._setup());
     window.requestAnimationFrame(this._nextRender);
   }
 
   setOrthoProjection(w, h) {
-    // TODO
+    mat4.ortho(this.projectionMatrix, 0, w, h, 0, 1, -1);
   }
 
   updateMeshes(meshes) {
-    // TODO
+    const { gl } = this;
+    meshes.forEach(({ name, mode = gl.TRIANGLES, data }) => {
+      this.meshes[name] = {
+        name,
+        mode,
+        length: data.length / 3,
+        buffer: initBuffer(this.gl, data)
+      };
+    });
   }
 
   getCurrentScene() {
@@ -43,14 +55,13 @@ export default class Renderer {
 
   _setup() {
     const { gl } = this;
-    this.tmp_buffer = initBuffer(gl);
-
     this._setupShaders();
 
-    const that = this;
+    const that = this; // HACK: use a closure; shader hot reload won't work if we use an arrow here (`this` will be null)
     module.hot.accept("./shaders", function() {
       that._setupShaders();
     });
+    gl.clearColor(0, 0, 0, 0);
   }
 
   _setupShaders() {
@@ -61,10 +72,16 @@ export default class Renderer {
       shaders.fragment
     );
     gl.useProgram(shaderProgram);
-    const location = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.tmp_buffer);
-    gl.enableVertexAttribArray(location);
-    gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+    const aVertexPosition = gl.getAttribLocation(
+      shaderProgram,
+      "aVertexPosition"
+    );
+    gl.enableVertexAttribArray(aVertexPosition);
+    this.shaderContext = {
+      locations: {
+        aVertexPosition
+      }
+    };
   }
 
   _nextRender() {
@@ -74,8 +91,24 @@ export default class Renderer {
 
   _render() {
     const { gl } = this;
-    gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
+    this.scene.getModels().forEach(model => this._renderModel(model));
+  }
+
+  _renderModel(model) {
+    const { gl } = this;
+    const { mesh: meshName } = model; // TODO use model.position
+    const mesh = this.meshes[meshName];
+    if (!mesh) {
+      this.error("no such mesh", meshName);
+    }
+    const { aVertexPosition } = this.shaderContext.locations;
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffer);
+    gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(mesh.mode, 0, mesh.length);
+  }
+
+  error(...args) {
+    throw new Error(args);
   }
 }

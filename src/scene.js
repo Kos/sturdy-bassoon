@@ -6,4 +6,8 @@ export default class Scene {
   addModel(model) {
     this.models.push(model);
   }
+
+  getModels() {
+    return this.models;
+  }
 }
