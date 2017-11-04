@@ -5,7 +5,7 @@ const renderer = new Renderer({
   target: document.getElementById("root")
 });
 
-renderer.setOrthoProjection(800, 600);
+renderer.setOrthoProjection(8, 6);
 renderer.updateMeshes([
   {
     name: "foo",
@@ -14,10 +14,17 @@ renderer.updateMeshes([
 ]);
 
 const scene = renderer.getCurrentScene();
-const model = new Model({
-  mesh: "foo",
-  position: [0.1, 0.5]
-});
-scene.addModel(model);
+scene.addModel(
+  new Model({
+    mesh: "foo",
+    position: [5, 3]
+  })
+);
+scene.addModel(
+  new Model({
+    mesh: "foo",
+    position: [2, 4]
+  })
+);
 
-setInterval(() => (model.x += 1), 50);
+// setInterval(() => (model.x += 1), 50);

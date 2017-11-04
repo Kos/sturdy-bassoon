@@ -18,7 +18,7 @@ export default class Renderer {
   }
 
   setOrthoProjection(w, h) {
-    mat4.ortho(this.projectionMatrix, 0, w, h, 0, 1, -1);
+    mat4.ortho(this.projectionMatrix, 0, w, 0, h, 1, -1);
   }
 
   updateMeshes(meshes) {
@@ -77,11 +77,16 @@ export default class Renderer {
       "aVertexPosition"
     );
     const uModelMatrix = gl.getUniformLocation(shaderProgram, "uModelMatrix");
+    const uProjectionMatrix = gl.getUniformLocation(
+      shaderProgram,
+      "uProjectionMatrix"
+    );
     gl.enableVertexAttribArray(aVertexPosition);
     this.shaderContext = {
       locations: {
         aVertexPosition,
-        uModelMatrix
+        uModelMatrix,
+        uProjectionMatrix
       }
     };
   }
@@ -94,6 +99,8 @@ export default class Renderer {
   _render() {
     const { gl } = this;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const { uProjectionMatrix } = this.shaderContext.locations;
+    gl.uniformMatrix4fv(uProjectionMatrix, false, this.projectionMatrix);
     this.scene.getModels().forEach(model => this._renderModel(model));
   }
 
