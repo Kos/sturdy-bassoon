@@ -28,7 +28,8 @@ scene.addModel(
 );
 const rotatingModel = new Model({
   mesh: "foo",
-  position: [4, 3]
+  position: [4, 3],
+  scale: 0.5
 });
 scene.addModel(rotatingModel);
 

@@ -1,20 +1,27 @@
 import { mat4, vec3 } from "gl-matrix";
 
 export default class Model {
-  constructor({ mesh, position = [], rotation = 0 }) {
+  constructor({ mesh, position = [], rotation = 0, scale = 1 }) {
     this.mesh = mesh;
     this.matrix = mat4.create();
     this._position = vec3.fromValues(...position, 0, 0, 0);
     this._rotation = rotation;
+    this._scale = scale;
     this.updateMatrix();
   }
 
   updateMatrix() {
-    const { _position: position, matrix, _rotation: rotation } = this;
+    const {
+      _position: position,
+      matrix,
+      _rotation: rotation,
+      _scale: scale
+    } = this;
     mat4.identity(matrix);
     mat4.translate(matrix, matrix, position);
     // Z axis is opposite of what we expect in rotateZ, negate the angle
     mat4.rotateZ(matrix, matrix, -rotation);
+    mat4.scale(matrix, matrix, [scale, scale, scale]);
   }
 
   // TODO one setter-like method that updates multiple fields
@@ -25,6 +32,14 @@ export default class Model {
   }
   set rotation(value) {
     this._rotation = value;
+    this.updateMatrix();
+  }
+
+  get scale() {
+    return this._scale;
+  }
+  set scale(value) {
+    this._scale = value;
     this.updateMatrix();
   }
 
