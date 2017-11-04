@@ -76,10 +76,12 @@ export default class Renderer {
       shaderProgram,
       "aVertexPosition"
     );
+    const uModelMatrix = gl.getUniformLocation(shaderProgram, "uModelMatrix");
     gl.enableVertexAttribArray(aVertexPosition);
     this.shaderContext = {
       locations: {
-        aVertexPosition
+        aVertexPosition,
+        uModelMatrix
       }
     };
   }
@@ -97,12 +99,13 @@ export default class Renderer {
 
   _renderModel(model) {
     const { gl } = this;
-    const { mesh: meshName } = model; // TODO use model.position
+    const { mesh: meshName, matrix: modelMatrix } = model;
     const mesh = this.meshes[meshName];
     if (!mesh) {
       this.error("no such mesh", meshName);
     }
-    const { aVertexPosition } = this.shaderContext.locations;
+    const { aVertexPosition, uModelMatrix } = this.shaderContext.locations;
+    gl.uniformMatrix4fv(uModelMatrix, false, modelMatrix);
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffer);
     gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
     gl.drawArrays(mesh.mode, 0, mesh.length);

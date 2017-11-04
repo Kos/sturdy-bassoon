@@ -1,4 +1,5 @@
 import Renderer from "./renderer";
+import Model from "./model";
 
 const renderer = new Renderer({
   target: document.getElementById("root")
@@ -13,10 +14,10 @@ renderer.updateMeshes([
 ]);
 
 const scene = renderer.getCurrentScene();
-const model = {
+const model = new Model({
   mesh: "foo",
-  position: new Float32Array([10, 20])
-};
+  position: [0.1, 0.5]
+});
 scene.addModel(model);
 
 setInterval(() => (model.x += 1), 50);
