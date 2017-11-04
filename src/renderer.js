@@ -28,7 +28,8 @@ export default class Renderer {
         name,
         mode,
         length: data.length / 3,
-        buffer: initBuffer(this.gl, data)
+        buffer: initBuffer(this.gl, data),
+        instanceIdBuffer: initBuffer(this.gl, threes(data.length / 3))
       };
     });
   }
@@ -50,6 +51,7 @@ export default class Renderer {
     if (!gl) {
       throw new Error("Cannot create webgl context");
     }
+    gl.getExtension("OES_standard_derivatives"); // TODO how to check if successful?
     return gl;
   }
 
@@ -76,15 +78,18 @@ export default class Renderer {
       shaderProgram,
       "aVertexPosition"
     );
+    const aVertexId = gl.getAttribLocation(shaderProgram, "aVertexId");
     const uModelMatrix = gl.getUniformLocation(shaderProgram, "uModelMatrix");
     const uProjectionMatrix = gl.getUniformLocation(
       shaderProgram,
       "uProjectionMatrix"
     );
     gl.enableVertexAttribArray(aVertexPosition);
+    gl.enableVertexAttribArray(aVertexId);
     this.shaderContext = {
       locations: {
         aVertexPosition,
+        aVertexId,
         uModelMatrix,
         uProjectionMatrix
       }
@@ -111,14 +116,30 @@ export default class Renderer {
     if (!mesh) {
       this.error("no such mesh", meshName);
     }
-    const { aVertexPosition, uModelMatrix } = this.shaderContext.locations;
+    const {
+      aVertexPosition,
+      aVertexId,
+      uModelMatrix
+    } = this.shaderContext.locations;
     gl.uniformMatrix4fv(uModelMatrix, false, modelMatrix);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffer);
     gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.instanceIdBuffer);
+    gl.vertexAttribPointer(aVertexId, 1, gl.FLOAT, false, 0, 0);
     gl.drawArrays(mesh.mode, 0, mesh.length);
   }
 
   error(...args) {
     throw new Error(args);
   }
+}
+
+function threes(n) {
+  const list = Array(n);
+  for (let i = 0; i < n; ++i) {
+    list[i] = i % 3;
+  }
+  const array = new Float32Array(list);
+  return array;
 }

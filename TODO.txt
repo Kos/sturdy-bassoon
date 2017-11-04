@@ -1,3 +1,6 @@
 [x] scene
 [x] per model transform
-[ ] projection
+[x] projection
+[x] model transform getters/setters
+[ ] model loader
+[x] wireframe shader!
