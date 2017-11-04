@@ -26,5 +26,11 @@ scene.addModel(
     position: [2, 4]
   })
 );
+const rotatingModel = new Model({
+  mesh: "foo",
+  position: [4, 3]
+});
+scene.addModel(rotatingModel);
 
-// setInterval(() => (model.x += 1), 50);
+setInterval(() => (rotatingModel.rotation += 0.02), 20);
+setInterval(() => (rotatingModel.x = 3 + Math.sin(rotatingModel.rotation)), 20);
