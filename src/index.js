@@ -1,5 +1,6 @@
 import Renderer from "./renderer";
 import Model from "./model";
+import { loadObj } from "./loader";
 
 const renderer = new Renderer({
   target: document.getElementById("root")
@@ -10,13 +11,14 @@ renderer.updateMeshes([
   {
     name: "foo",
     data: new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0, 0.5, 0])
-  }
+  },
+  loadObj()
 ]);
 
 const scene = renderer.getCurrentScene();
-scene.addModel(
+const dod = scene.addModel(
   new Model({
-    mesh: "foo",
+    mesh: "dodecahedron",
     position: [5, 3]
   })
 );
@@ -26,12 +28,31 @@ scene.addModel(
     position: [2, 4]
   })
 );
-const rotatingModel = new Model({
-  mesh: "foo",
-  position: [4, 3],
-  scale: 0.5
-});
-scene.addModel(rotatingModel);
+const rotatingModel = scene.addModel(
+  new Model({
+    mesh: "foo",
+    position: [4, 3],
+    scale: 0.5
+  })
+);
 
-setInterval(() => (rotatingModel.rotation += 0.02), 20);
-setInterval(() => (rotatingModel.x = 3 + Math.sin(rotatingModel.rotation)), 20);
+function everyAnimationFrame(timedeltaFn) {
+  requestAnimationFrame(time => {
+    let prevTime = time;
+    // start the loop!
+    const tick = time => {
+      requestAnimationFrame(tick);
+      const timedelta = time - prevTime;
+      prevTime = time;
+      if (timedelta > 1000) return;
+      timedeltaFn(timedelta);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+everyAnimationFrame(delta => {
+  rotatingModel.rotation += 0.02 * delta / 16;
+  rotatingModel.x = 3 + Math.sin(rotatingModel.rotation);
+  dod.rotation -= 0.03 * delta / 20;
+});

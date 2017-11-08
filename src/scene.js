@@ -5,6 +5,7 @@ export default class Scene {
 
   addModel(model) {
     this.models.push(model);
+    return model; // shortcut
   }
 
   getModels() {

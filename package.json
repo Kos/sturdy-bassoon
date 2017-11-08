@@ -29,6 +29,7 @@
     "webpack-merge": "^4.1.0"
   },
   "dependencies": {
-    "gl-matrix": "^2.4.0"
+    "gl-matrix": "^2.4.0",
+    "webgl-obj-loader": "^0.1.1"
   }
 }
