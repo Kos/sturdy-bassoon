@@ -1,6 +1,7 @@
 import Renderer from "./renderer";
 import Model from "./model";
 import { loadObj } from "./loader";
+import { vec3, quat } from "gl-matrix";
 
 const renderer = new Renderer({
   target: document.getElementById("root")
@@ -51,8 +52,16 @@ function everyAnimationFrame(timedeltaFn) {
   });
 }
 
+const axis = vec3.fromValues(
+  Math.random() * 2,
+  Math.random() * 2,
+  Math.random() * 2
+);
+vec3.normalize(axis, axis);
+
 everyAnimationFrame(delta => {
   rotatingModel.rotation += 0.02 * delta / 16;
   rotatingModel.x = 3 + Math.sin(rotatingModel.rotation);
-  dod.rotation -= 0.03 * delta / 20;
+  const r = quat.setAxisAngle(quat.create(), axis, rotatingModel.rotation);
+  dod.setQuaternion(r);
 });

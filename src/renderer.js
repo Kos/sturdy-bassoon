@@ -64,6 +64,8 @@ export default class Renderer {
       that._setupShaders();
     });
     gl.clearColor(0, 0, 0, 0);
+
+    gl.enable(gl.DEPTH_TEST);
   }
 
   _setupShaders() {

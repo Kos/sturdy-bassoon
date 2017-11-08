@@ -1,11 +1,13 @@
-import { mat4, vec3 } from "gl-matrix";
+import { mat4, vec3, quat } from "gl-matrix";
 
 export default class Model {
   constructor({ mesh, position = [], rotation = 0, scale = 1 }) {
     this.mesh = mesh;
     this.matrix = mat4.create();
+    this._euler = vec3.fromValues(0, 0, rotation);
+    this._quat = quat.create();
+    this._rotation = mat4.create();
     this._position = vec3.fromValues(...position, 0, 0, 0);
-    this._rotation = rotation;
     this._scale = scale;
     this.updateMatrix();
   }
@@ -20,7 +22,7 @@ export default class Model {
     mat4.identity(matrix);
     mat4.translate(matrix, matrix, position);
     // Z axis is opposite of what we expect in rotateZ, negate the angle
-    mat4.rotateZ(matrix, matrix, -rotation);
+    mat4.multiply(matrix, matrix, rotation);
     mat4.scale(matrix, matrix, [scale, scale, scale]);
   }
 
@@ -28,10 +30,25 @@ export default class Model {
   // and updates the matrix only once.
 
   get rotation() {
-    return this._rotation;
+    return this._euler[2];
   }
   set rotation(value) {
-    this._rotation = value;
+    this._euler[2] = value;
+    const radToDeg = 180 / Math.PI;
+
+    quat.fromEuler(
+      this._quat,
+      this._euler[0] * radToDeg,
+      this._euler[1] * radToDeg,
+      this._euler[2] * radToDeg
+    );
+    mat4.fromQuat(this._rotation, this._quat);
+    this.updateMatrix();
+  }
+
+  setQuaternion(val) {
+    quat.copy(this._quat, val);
+    mat4.fromQuat(this._rotation, this._quat);
     this.updateMatrix();
   }
 
