@@ -63,9 +63,9 @@ export default class Renderer {
     module.hot.accept("./shaders", function() {
       that._setupShaders();
     });
-    gl.clearColor(0, 0, 0, 0);
 
     gl.enable(gl.DEPTH_TEST);
+    gl.clearColor(0, 0, 0, 1);
   }
 
   _setupShaders() {

@@ -10,8 +10,10 @@ lowp float edgeFactor() {
 }
 
 void main() {
-  lowp vec3 edgeColor = vec3(0, 0, 0);
-  gl_FragColor.rgb = vBarycentric.xyz;
+  lowp vec3 edgeColor = vec3(1, .5, .2);
+  //gl_FragColor.rgb = vBarycentric.xyz;
+  gl_FragColor.rgb = vec3(0, 0, 0);
+
   gl_FragColor.a = 1.;
   gl_FragColor.rgb = mix(edgeColor, gl_FragColor.rgb, edgeFactor());
 }
