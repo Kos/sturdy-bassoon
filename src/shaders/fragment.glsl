@@ -3,7 +3,7 @@
 varying lowp vec3 vBarycentric;
 
 lowp float edgeFactor() {
-  lowp float edgeWidth = 2.0;
+  lowp float edgeWidth = 0.8;
   lowp vec3 d = fwidth(vBarycentric);
   lowp vec3 a3 = smoothstep(vec3(0.0), d * edgeWidth, vBarycentric);
   return min(min(a3.x, a3.y), a3.z);

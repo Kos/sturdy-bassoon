@@ -4,6 +4,11 @@ import { initShaderProgram } from "./utils/shaders";
 import Scene from "./scene";
 import { mat4 } from "gl-matrix";
 
+const AttribLocations = {
+  aVertexPosition: 0,
+  aVertexId: 1
+};
+
 export default class Renderer {
   constructor({ target, width = 800, height = 600 }) {
     this._nextRender = this._nextRender.bind(this);
@@ -47,7 +52,7 @@ export default class Renderer {
   }
 
   _createContext() {
-    const gl = this.canvas.getContext("experimental-webgl");
+    const gl = this.canvas.getContext("experimental-webgl", { stencil: true });
     if (!gl) {
       throw new Error("Cannot create webgl context");
     }
@@ -73,29 +78,31 @@ export default class Renderer {
     const shaderProgram = initShaderProgram(
       gl,
       shaders.vertex,
-      shaders.fragment
+      shaders.fragment,
+      AttribLocations
     );
-    gl.useProgram(shaderProgram);
-    const aVertexPosition = gl.getAttribLocation(
-      shaderProgram,
-      "aVertexPosition"
-    );
-    const aVertexId = gl.getAttribLocation(shaderProgram, "aVertexId");
-    const uModelMatrix = gl.getUniformLocation(shaderProgram, "uModelMatrix");
-    const uProjectionMatrix = gl.getUniformLocation(
-      shaderProgram,
-      "uProjectionMatrix"
-    );
-    gl.enableVertexAttribArray(aVertexPosition);
-    gl.enableVertexAttribArray(aVertexId);
     this.shaderContext = {
-      locations: {
-        aVertexPosition,
-        aVertexId,
-        uModelMatrix,
-        uProjectionMatrix
-      }
+      program: shaderProgram,
+      locations: loadLocations(gl, shaderProgram, {
+        attributes: ["aVertexPosition", "aVertexId"],
+        uniforms: ["uModelMatrix", "uProjectionMatrix"]
+      })
     };
+    const outlineShaderProgram = initShaderProgram(
+      gl,
+      shaders.outlineVertex,
+      shaders.outlineFragment,
+      AttribLocations
+    );
+    this.outlineShaderContext = {
+      program: outlineShaderProgram,
+      locations: loadLocations(gl, outlineShaderProgram, {
+        attributes: ["aVertexPosition"],
+        uniforms: ["uModelMatrix", "uProjectionMatrix"]
+      })
+    };
+    console.log("shaderContext", this.shaderContext);
+    console.log("outlineShaderContext", this.outlineShaderContext);
   }
 
   _nextRender() {
@@ -105,13 +112,34 @@ export default class Renderer {
 
   _render() {
     const { gl } = this;
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    const { uProjectionMatrix } = this.shaderContext.locations;
-    gl.uniformMatrix4fv(uProjectionMatrix, false, this.projectionMatrix);
-    this.scene.getModels().forEach(model => this._renderModel(model));
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+    gl.enable(gl.STENCIL_TEST);
+
+    gl.stencilFunc(gl.ALWAYS, 1, 255);
+    gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+    gl.useProgram(this.shaderContext.program);
+    gl.uniformMatrix4fv(
+      this.shaderContext.locations.uProjectionMatrix,
+      false,
+      this.projectionMatrix
+    );
+    this.scene
+      .getModels()
+      .forEach(model => this._renderModel(model, this.shaderContext));
+
+    gl.stencilFunc(gl.EQUAL, 0, 255);
+    gl.useProgram(this.outlineShaderContext.program);
+    gl.uniformMatrix4fv(
+      this.outlineShaderContext.locations.uProjectionMatrix,
+      false,
+      this.projectionMatrix
+    );
+    this.scene
+      .getModels()
+      .forEach(model => this._renderModel(model, this.outlineShaderContext));
   }
 
-  _renderModel(model) {
+  _renderModel(model, shaderContext) {
     const { gl } = this;
     const { mesh: meshName, matrix: modelMatrix } = model;
     const mesh = this.meshes[meshName];
@@ -122,13 +150,19 @@ export default class Renderer {
       aVertexPosition,
       aVertexId,
       uModelMatrix
-    } = this.shaderContext.locations;
+    } = shaderContext.locations;
     gl.uniformMatrix4fv(uModelMatrix, false, modelMatrix);
 
+    gl.enableVertexAttribArray(AttribLocations.aVertexPosition);
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffer);
     gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.instanceIdBuffer);
-    gl.vertexAttribPointer(aVertexId, 1, gl.FLOAT, false, 0, 0);
+    if (aVertexId) {
+      gl.enableVertexAttribArray(AttribLocations.aVertexId);
+      gl.bindBuffer(gl.ARRAY_BUFFER, mesh.instanceIdBuffer);
+      gl.vertexAttribPointer(aVertexId, 1, gl.FLOAT, false, 0, 0);
+    } else {
+      gl.disableVertexAttribArray(AttribLocations.aVertexId);
+    }
     gl.drawArrays(mesh.mode, 0, mesh.length);
   }
 
@@ -144,4 +178,15 @@ function threes(n) {
   }
   const array = new Float32Array(list);
   return array;
+}
+
+function loadLocations(gl, program, { attributes, uniforms }) {
+  const locations = {};
+  attributes.forEach(attr => {
+    locations[attr] = gl.getAttribLocation(program, attr);
+  });
+  uniforms.forEach(attr => {
+    locations[attr] = gl.getUniformLocation(program, attr);
+  });
+  return locations;
 }
