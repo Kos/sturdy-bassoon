@@ -37,7 +37,7 @@ module.exports = {
         exclude: /node_modules/
       },
       {
-        test: /\.glsl$/,
+        test: /\.(glsl|obj)$/,
         use: "raw-loader"
       }
     ]

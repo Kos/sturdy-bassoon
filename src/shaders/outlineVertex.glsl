@@ -1,12 +1,16 @@
 attribute vec4 aVertexPosition;
+attribute vec3 aNormal;
 
 uniform mat4 uProjectionMatrix;
 uniform mat4 uModelMatrix;
 
+lowp float thickness = 0.03;
+
 void main() {
-  // TODO instead of multiplying adjustedPosition in model space,
-  // translate by normal
-  // (we need normals)
-  vec3 adjustedPosition = aVertexPosition.xyz/aVertexPosition.w*1.03;
-  gl_Position = uProjectionMatrix * uModelMatrix * vec4(adjustedPosition.xyz, 1.0);
+  vec4 viewPosition = uModelMatrix * aVertexPosition;
+  // Use inverse transpose for normal?
+  mat3 normalMatrix = mat3(uModelMatrix);
+  vec3 transformedNormal = normalize(normalMatrix * normalize(aNormal));
+  viewPosition.xyz += transformedNormal * thickness;
+  gl_Position = uProjectionMatrix * viewPosition;
 }

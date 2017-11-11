@@ -6,7 +6,8 @@ import { mat4 } from "gl-matrix";
 
 const AttribLocations = {
   aVertexPosition: 0,
-  aVertexId: 1
+  aVertexId: 1,
+  aNormal: 2
 };
 
 export default class Renderer {
@@ -23,17 +24,18 @@ export default class Renderer {
   }
 
   setOrthoProjection(w, h) {
-    mat4.ortho(this.projectionMatrix, 0, w, 0, h, 1, -1);
+    mat4.ortho(this.projectionMatrix, 0, w, 0, h, 10, -10);
   }
 
   updateMeshes(meshes) {
     const { gl } = this;
-    meshes.forEach(({ name, mode = gl.TRIANGLES, data }) => {
+    meshes.forEach(({ name, mode = gl.TRIANGLES, data, normals }) => {
       this.meshes[name] = {
         name,
         mode,
         length: data.length / 3,
         buffer: initBuffer(this.gl, data),
+        normalBuffer: initBuffer(this.gl, normals),
         instanceIdBuffer: initBuffer(this.gl, threes(data.length / 3))
       };
     });
@@ -97,7 +99,7 @@ export default class Renderer {
     this.outlineShaderContext = {
       program: outlineShaderProgram,
       locations: loadLocations(gl, outlineShaderProgram, {
-        attributes: ["aVertexPosition"],
+        attributes: ["aVertexPosition", "aNormal"],
         uniforms: ["uModelMatrix", "uProjectionMatrix"]
       })
     };
@@ -149,6 +151,7 @@ export default class Renderer {
     const {
       aVertexPosition,
       aVertexId,
+      aNormal,
       uModelMatrix
     } = shaderContext.locations;
     gl.uniformMatrix4fv(uModelMatrix, false, modelMatrix);
@@ -156,12 +159,21 @@ export default class Renderer {
     gl.enableVertexAttribArray(AttribLocations.aVertexPosition);
     gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buffer);
     gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+
     if (aVertexId) {
       gl.enableVertexAttribArray(AttribLocations.aVertexId);
       gl.bindBuffer(gl.ARRAY_BUFFER, mesh.instanceIdBuffer);
       gl.vertexAttribPointer(aVertexId, 1, gl.FLOAT, false, 0, 0);
     } else {
       gl.disableVertexAttribArray(AttribLocations.aVertexId);
+    }
+
+    if (aNormal) {
+      gl.enableVertexAttribArray(AttribLocations.aNormal);
+      console.log("normalBuffer", mesh.normalBuffer);
+      gl.vertexAttribPointer(aNormal, 3, gl.FLOAT, false, 0, 0);
+    } else {
+      gl.disableVertexAttribArray(AttribLocations.aNormal);
     }
     gl.drawArrays(mesh.mode, 0, mesh.length);
   }

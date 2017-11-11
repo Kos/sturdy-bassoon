@@ -11,7 +11,8 @@ renderer.setOrthoProjection(8, 6);
 renderer.updateMeshes([
   {
     name: "foo",
-    data: new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0, 0.5, 0])
+    data: new Float32Array([-0.5, -0.5, 0, 0.5, -0.5, 0, 0, 0.5, 0]),
+    normals: new Float32Array([-0.71, -0.71, 0, 0.71, -0.71, 0, 0, 0, 1])
   },
   loadObj()
 ]);
