@@ -1,0 +1,44 @@
+Now on to something completely different...
+
+How about a convenient API for particle effects?
+
+const particleEffect = new ParticleEffect(...)
+
+scene.addParticleEffect()
+
+- Effect can be placed - it can have a position and stuff just like a model
+- Effect lives for specific time, special case is an effect that dies after spawning some particles
+- Effect spawns short lived objects (kind of like Models but I guess we want to render them differently???)
+  - instancing, maybe?
+  - oh lets just start with a for loop, we will have less than a hundred of these
+  - so what are our draw calls going to look like
+  - DrawArrays over a simple buffer, d'oh
+- Okay, what attributes/uniforms does a particle have?
+  - position
+  - rotation
+  - size
+  - speed :)
+  - color (we're going to have a TON of variety in here)
+- How does a particle change in time?
+  - fly
+  - speed up / slow down
+  - gravitate
+  - rotate
+  - change direction somehow
+  - grow/shrink
+  - change color
+  - change alpha
+- which things do we do on GPU?
+  - none lol 
+  - really? we could have the vertex shader do a good bunch of that
+  - but this limits the amount of FUN we can do with them
+- can bullets be particles? :D
+  - hmmmmm hm hm hm hm. this is a good one and it will help
+  - does it mean we'd like to have logic for particles?
+  - kind of, but not the ones created from a particle generator I suppose....
+
+
+Rendering:
+  Each particle sends 3 copies of
+  - position
+  - index

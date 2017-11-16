@@ -19,6 +19,18 @@ export default class Renderer {
     this.meshes = {};
     this.projectionMatrix = mat4.create();
     this.shaderContext = null;
+
+    const particlesData = new Float32Array(10 * 3 * 3);
+    particlesData[0] = particlesData[0 + 3] = particlesData[0 + 6] = 2;
+    particlesData[1] = particlesData[1 + 3] = particlesData[1 + 6] = 3;
+    particlesData[2] = particlesData[2 + 3] = particlesData[2 + 6] = 0;
+    this.particles = {
+      // TODO cyclic buffer?
+      count: 10,
+      data: particlesData,
+      buffer: initBuffer(this.gl, particlesData, this.gl.DYNAMIC_DRAW),
+      instanceIdBuffer: initBuffer(this.gl, threes(10 * 3))
+    };
     window.requestAnimationFrame(() => this._setup());
     window.requestAnimationFrame(this._nextRender);
   }
@@ -90,6 +102,7 @@ export default class Renderer {
         uniforms: ["uModelMatrix", "uProjectionMatrix"]
       })
     };
+
     const outlineShaderProgram = initShaderProgram(
       gl,
       shaders.outlineVertex,
@@ -103,8 +116,20 @@ export default class Renderer {
         uniforms: ["uModelMatrix", "uProjectionMatrix"]
       })
     };
-    console.log("shaderContext", this.shaderContext);
-    console.log("outlineShaderContext", this.outlineShaderContext);
+
+    const particleShaderProgram = initShaderProgram(
+      gl,
+      shaders.particleVertex,
+      shaders.fragment,
+      AttribLocations
+    );
+    this.particleShaderContext = {
+      program: particleShaderProgram,
+      locations: loadLocations(gl, particleShaderProgram, {
+        attributes: ["aVertexPosition", "aVertexId"],
+        uniforms: ["uProjectionMatrix"]
+      })
+    };
   }
 
   _nextRender() {
@@ -117,6 +142,7 @@ export default class Renderer {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     gl.enable(gl.STENCIL_TEST);
 
+    // Models
     gl.stencilFunc(gl.ALWAYS, 1, 255);
     gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
     gl.useProgram(this.shaderContext.program);
@@ -129,6 +155,7 @@ export default class Renderer {
       .getModels()
       .forEach(model => this._renderModel(model, this.shaderContext));
 
+    // Model outlines
     gl.stencilFunc(gl.EQUAL, 0, 255);
     gl.useProgram(this.outlineShaderContext.program);
     gl.uniformMatrix4fv(
@@ -139,6 +166,27 @@ export default class Renderer {
     this.scene
       .getModels()
       .forEach(model => this._renderModel(model, this.outlineShaderContext));
+
+    // Particles
+    const f3 = [3, gl.FLOAT, false, 0, 0];
+    gl.stencilFunc(gl.ALWAYS, 0, 0);
+    const { particles } = this;
+    gl.bindBuffer(gl.ARRAY_BUFFER, particles.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, particles.data, gl.DYNAMIC_DRAW);
+    gl.useProgram(this.particleShaderContext.program);
+    gl.uniformMatrix4fv(
+      this.particleShaderContext.locations.uProjectionMatrix,
+      false,
+      this.projectionMatrix
+    );
+    gl.bindBuffer(gl.ARRAY_BUFFER, particles.buffer);
+    gl.enableVertexAttribArray(AttribLocations.aVertexPosition);
+    gl.vertexAttribPointer(AttribLocations.aVertexPosition, ...f3);
+    gl.bindBuffer(gl.ARRAY_BUFFER, particles.instanceIdBuffer);
+    gl.enableVertexAttribArray(AttribLocations.aVertexId);
+    gl.vertexAttribPointer(AttribLocations.aVertexId, 1, gl.FLOAT, false, 0, 0);
+    gl.disableVertexAttribArray(AttribLocations.aNormal);
+    gl.drawArrays(gl.TRIANGLES, 0, 3 * this.particles.count);
   }
 
   _renderModel(model, shaderContext) {
@@ -170,7 +218,6 @@ export default class Renderer {
 
     if (aNormal) {
       gl.enableVertexAttribArray(AttribLocations.aNormal);
-      console.log("normalBuffer", mesh.normalBuffer);
       gl.vertexAttribPointer(aNormal, 3, gl.FLOAT, false, 0, 0);
     } else {
       gl.disableVertexAttribArray(AttribLocations.aNormal);
