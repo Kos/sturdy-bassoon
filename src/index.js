@@ -60,9 +60,10 @@ const axis = vec3.fromValues(
 );
 vec3.normalize(axis, axis);
 
-everyAnimationFrame(delta => {
-  rotatingModel.rotation += 0.02 * delta / 16;
+everyAnimationFrame(deltaTime => {
+  rotatingModel.rotation += 0.02 * deltaTime / 16;
   rotatingModel.x = 3 + Math.sin(rotatingModel.rotation);
   const r = quat.setAxisAngle(quat.create(), axis, rotatingModel.rotation);
   dod.setQuaternion(r);
+  renderer.tick(deltaTime);
 });

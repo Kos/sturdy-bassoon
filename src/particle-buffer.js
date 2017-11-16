@@ -1,13 +1,18 @@
 import { initBuffer, threes } from "./utils/buffers";
 
+let m = 0;
 const Traits = {
-  x: 0,
-  y: 1,
-  z: 2,
-  COUNT: 3
+  x: m++,
+  y: m++,
+  z: m++,
+  vx: m++,
+  vy: m++,
+  vz: m++,
+  COUNT: m++
 };
 
 const VertsPerParticle = 3;
+const ParticleSize = Traits.COUNT * VertsPerParticle;
 
 export default class ParticleBuffer {
   constructor(gl, capacity = 10) {
@@ -36,11 +41,31 @@ export default class ParticleBuffer {
     if (values.length > Traits.COUNT) {
       throw new Error("Too many args to add()");
     }
-    const insertionIndex = this.particlesCount;
+    const insertionIndex = this.particlesCount * ParticleSize;
     this.particlesCount += 1; // TODO use a cyclic buffer here
-    for (let i = 0; i < VertsPerParticle; ++i) {
-      for (let j = 0; j < values.length; ++j) {
-        this.particlesData[insertionIndex + Traits.COUNT * i + j] = values[j];
+    for (let vertexIndex = 0; vertexIndex < VertsPerParticle; ++vertexIndex) {
+      for (let traitIndex = 0; traitIndex < values.length; ++traitIndex) {
+        this.particlesData[
+          insertionIndex + Traits.COUNT * vertexIndex + traitIndex
+        ] =
+          values[traitIndex];
+      }
+    }
+  }
+
+  tick(deltaTime) {
+    // TODO use a cyclic buffer here
+    for (let i = 0; i < this.particlesCount; ++i) {
+      const particleIndex = i * ParticleSize;
+      for (let j = 0; j < VertsPerParticle; ++j) {
+        console.log("updating particle");
+        const vertexIndex = particleIndex + j * Traits.COUNT;
+        this.particlesData[vertexIndex + Traits.x] +=
+          this.particlesData[vertexIndex + Traits.vx] * deltaTime;
+        this.particlesData[vertexIndex + Traits.y] +=
+          this.particlesData[vertexIndex + Traits.vy] * deltaTime;
+        this.particlesData[vertexIndex + Traits.z] +=
+          this.particlesData[vertexIndex + Traits.vz] * deltaTime;
       }
     }
   }

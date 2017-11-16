@@ -22,9 +22,13 @@ export default class Renderer {
     this.shaderContext = null;
 
     this.particleBuffer = new ParticleBuffer(this.gl);
-    this.particleBuffer.add(2, 3, 0);
+    this.particleBuffer.add(2, 3, 0, 0.001, 0.001);
     window.requestAnimationFrame(() => this._setup());
     window.requestAnimationFrame(this._nextRender);
+  }
+
+  tick(deltaTime) {
+    this.particleBuffer.tick(deltaTime);
   }
 
   setOrthoProjection(w, h) {
@@ -160,7 +164,6 @@ export default class Renderer {
       .forEach(model => this._renderModel(model, this.outlineShaderContext));
 
     // Particles
-    const f3 = [3, gl.FLOAT, false, 0, 0];
     gl.stencilFunc(gl.ALWAYS, 0, 0);
     this.particleBuffer.refreshBuffer();
     gl.useProgram(this.particleShaderContext.program);
@@ -171,7 +174,14 @@ export default class Renderer {
     );
     gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer.buffer);
     gl.enableVertexAttribArray(AttribLocations.aVertexPosition);
-    gl.vertexAttribPointer(AttribLocations.aVertexPosition, ...f3);
+    gl.vertexAttribPointer(
+      AttribLocations.aVertexPosition,
+      3,
+      gl.FLOAT,
+      false,
+      6 * 4,
+      0
+    );
     gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer.instanceIdBuffer);
     gl.enableVertexAttribArray(AttribLocations.aVertexId);
     gl.vertexAttribPointer(AttribLocations.aVertexId, 1, gl.FLOAT, false, 0, 0);
