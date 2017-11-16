@@ -1,7 +1,8 @@
 import * as shaders from "./shaders";
-import { initBuffer } from "./utils/buffers";
+import { initBuffer, threes } from "./utils/buffers";
 import { initShaderProgram } from "./utils/shaders";
 import Scene from "./scene";
+import ParticleBuffer from "./particle-buffer";
 import { mat4 } from "gl-matrix";
 
 const AttribLocations = {
@@ -20,17 +21,8 @@ export default class Renderer {
     this.projectionMatrix = mat4.create();
     this.shaderContext = null;
 
-    const particlesData = new Float32Array(10 * 3 * 3);
-    particlesData[0] = particlesData[0 + 3] = particlesData[0 + 6] = 2;
-    particlesData[1] = particlesData[1 + 3] = particlesData[1 + 6] = 3;
-    particlesData[2] = particlesData[2 + 3] = particlesData[2 + 6] = 0;
-    this.particles = {
-      // TODO cyclic buffer?
-      count: 10,
-      data: particlesData,
-      buffer: initBuffer(this.gl, particlesData, this.gl.DYNAMIC_DRAW),
-      instanceIdBuffer: initBuffer(this.gl, threes(10 * 3))
-    };
+    this.particleBuffer = new ParticleBuffer(this.gl);
+    this.particleBuffer.add(2, 3, 0);
     window.requestAnimationFrame(() => this._setup());
     window.requestAnimationFrame(this._nextRender);
   }
@@ -170,23 +162,22 @@ export default class Renderer {
     // Particles
     const f3 = [3, gl.FLOAT, false, 0, 0];
     gl.stencilFunc(gl.ALWAYS, 0, 0);
-    const { particles } = this;
-    gl.bindBuffer(gl.ARRAY_BUFFER, particles.buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, particles.data, gl.DYNAMIC_DRAW);
+    this.particleBuffer.refreshBuffer();
     gl.useProgram(this.particleShaderContext.program);
     gl.uniformMatrix4fv(
       this.particleShaderContext.locations.uProjectionMatrix,
       false,
       this.projectionMatrix
     );
-    gl.bindBuffer(gl.ARRAY_BUFFER, particles.buffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer.buffer);
     gl.enableVertexAttribArray(AttribLocations.aVertexPosition);
     gl.vertexAttribPointer(AttribLocations.aVertexPosition, ...f3);
-    gl.bindBuffer(gl.ARRAY_BUFFER, particles.instanceIdBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer.instanceIdBuffer);
     gl.enableVertexAttribArray(AttribLocations.aVertexId);
     gl.vertexAttribPointer(AttribLocations.aVertexId, 1, gl.FLOAT, false, 0, 0);
     gl.disableVertexAttribArray(AttribLocations.aNormal);
-    gl.drawArrays(gl.TRIANGLES, 0, 3 * this.particles.count);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3 * this.particleBuffer.particlesCount);
   }
 
   _renderModel(model, shaderContext) {
@@ -228,15 +219,6 @@ export default class Renderer {
   error(...args) {
     throw new Error(args);
   }
-}
-
-function threes(n) {
-  const list = Array(n);
-  for (let i = 0; i < n; ++i) {
-    list[i] = i % 3;
-  }
-  const array = new Float32Array(list);
-  return array;
 }
 
 function loadLocations(gl, program, { attributes, uniforms }) {
