@@ -172,22 +172,9 @@ export default class Renderer {
       false,
       this.projectionMatrix
     );
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer.buffer);
-    gl.enableVertexAttribArray(AttribLocations.aVertexPosition);
-    gl.vertexAttribPointer(
-      AttribLocations.aVertexPosition,
-      3,
-      gl.FLOAT,
-      false,
-      6 * 4,
-      0
-    );
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.particleBuffer.instanceIdBuffer);
-    gl.enableVertexAttribArray(AttribLocations.aVertexId);
-    gl.vertexAttribPointer(AttribLocations.aVertexId, 1, gl.FLOAT, false, 0, 0);
+    this.particleBuffer.bindBuffers(AttribLocations);
     gl.disableVertexAttribArray(AttribLocations.aNormal);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 3 * this.particleBuffer.particlesCount);
+    this.particleBuffer.draw();
   }
 
   _renderModel(model, shaderContext) {

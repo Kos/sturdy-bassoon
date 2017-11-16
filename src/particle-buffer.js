@@ -8,17 +8,18 @@ const Traits = {
   vx: m++,
   vy: m++,
   vz: m++,
-  COUNT: m++
+  Count: m++
 };
 
 const VertsPerParticle = 3;
-const ParticleSize = Traits.COUNT * VertsPerParticle;
+const ParticleSize = Traits.Count * VertsPerParticle;
+const GLFloatSizeInBytes = 4;
 
 export default class ParticleBuffer {
   constructor(gl, capacity = 10) {
     this.gl = gl;
     this.particlesData = new Float32Array(
-      capacity * Traits.COUNT * VertsPerParticle
+      capacity * Traits.Count * VertsPerParticle
     );
     this.particlesCount = 0;
     /*
@@ -38,7 +39,7 @@ export default class ParticleBuffer {
   }
 
   add(...values) {
-    if (values.length > Traits.COUNT) {
+    if (values.length > Traits.Count) {
       throw new Error("Too many args to add()");
     }
     const insertionIndex = this.particlesCount * ParticleSize;
@@ -46,7 +47,7 @@ export default class ParticleBuffer {
     for (let vertexIndex = 0; vertexIndex < VertsPerParticle; ++vertexIndex) {
       for (let traitIndex = 0; traitIndex < values.length; ++traitIndex) {
         this.particlesData[
-          insertionIndex + Traits.COUNT * vertexIndex + traitIndex
+          insertionIndex + Traits.Count * vertexIndex + traitIndex
         ] =
           values[traitIndex];
       }
@@ -59,7 +60,7 @@ export default class ParticleBuffer {
       const particleIndex = i * ParticleSize;
       for (let j = 0; j < VertsPerParticle; ++j) {
         console.log("updating particle");
-        const vertexIndex = particleIndex + j * Traits.COUNT;
+        const vertexIndex = particleIndex + j * Traits.Count;
         this.particlesData[vertexIndex + Traits.x] +=
           this.particlesData[vertexIndex + Traits.vx] * deltaTime;
         this.particlesData[vertexIndex + Traits.y] +=
@@ -74,5 +75,21 @@ export default class ParticleBuffer {
     const { gl } = this;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, this.particlesData, gl.DYNAMIC_DRAW);
+  }
+
+  bindBuffers({ aVertexPosition, aVertexId }) {
+    const { gl } = this;
+    const stride = GLFloatSizeInBytes * Traits.Count;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    gl.enableVertexAttribArray(aVertexPosition);
+    gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, stride, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceIdBuffer);
+    gl.enableVertexAttribArray(aVertexId);
+    gl.vertexAttribPointer(aVertexId, 1, gl.FLOAT, false, 0, 0);
+  }
+
+  draw() {
+    const { gl } = this;
+    gl.drawArrays(gl.TRIANGLES, 0, VertsPerParticle * this.particlesCount);
   }
 }
