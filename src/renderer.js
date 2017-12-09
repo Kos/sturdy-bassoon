@@ -22,7 +22,8 @@ export default class Renderer {
     this.shaderContext = null;
 
     this.particleBuffer = new ParticleBuffer(this.gl);
-    this.particleBuffer.add(0, 2, 3, 0, 0, 0, 0.0001);
+    // this.particleBuffer.add(0, 2, 3, 0, 0, 0, 0.0001);
+    this.particleBuffer.add(0, 2, 3, 0, 0, 0, 0.0);
     window.requestAnimationFrame(() => this._setup());
     window.requestAnimationFrame(this._nextRender);
   }
@@ -116,7 +117,7 @@ export default class Renderer {
     const particleShaderProgram = initShaderProgram(
       gl,
       shaders.particleVertex,
-      shaders.fragment,
+      shaders.particleFragment,
       AttribLocations
     );
     this.particleShaderContext = {
