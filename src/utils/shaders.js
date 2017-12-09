@@ -36,3 +36,28 @@ export function loadShader(gl, type, source) {
   }
   return shader;
 }
+
+export function bindAttributes(gl, program, attributes) {
+  Object.keys(attributes).forEach(name => {
+    const location = gl.getAttribLocation(program, name);
+    if (location !== -1) {
+      gl.enableVertexAttribArray(location);
+      console.log(
+        "gl.vertexAttribPointer",
+        name,
+        location,
+        ...attributes[name]
+      );
+      gl.vertexAttribPointer(location, ...attributes[name]);
+    }
+  });
+}
+
+export function unbindAttributes(gl, program, attributes) {
+  Object.keys(attributes).forEach(name => {
+    const location = gl.getAttribLocation(program, name);
+    if (location !== -1) {
+      gl.disableVertexAttribArray(location);
+    }
+  });
+}

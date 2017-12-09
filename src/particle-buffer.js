@@ -1,12 +1,13 @@
-import { ParticleManager, OutputVertexSize } from "./particles";
+import { ParticleManager } from "./particles";
+import { bindAttributes, unbindAttributes } from "./utils/shaders";
 
 const VertsPerParticle = 3;
-const GLFloatSizeInBytes = 4;
 
 export default class ParticleBuffer {
   constructor(gl, capacity = 10) {
     this.gl = gl;
     this.pm = new ParticleManager(capacity);
+    this.attributes = this.pm.getAttributes(gl);
     this.buffer = gl.createBuffer();
   }
 
@@ -25,26 +26,11 @@ export default class ParticleBuffer {
     gl.bufferData(gl.ARRAY_BUFFER, buf, gl.DYNAMIC_DRAW);
   }
 
-  bindBuffers({ aVertexPosition, aVertexId }) {
+  draw(program) {
     const { gl } = this;
-    const stride = GLFloatSizeInBytes * OutputVertexSize;
-    const positionOffset = GLFloatSizeInBytes * 2;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-    gl.enableVertexAttribArray(aVertexPosition);
-    gl.vertexAttribPointer(
-      aVertexPosition,
-      3,
-      gl.FLOAT,
-      false,
-      stride,
-      positionOffset
-    );
-    gl.enableVertexAttribArray(aVertexId);
-    gl.vertexAttribPointer(aVertexId, 1, gl.FLOAT, false, stride, 0);
-  }
-
-  draw() {
-    const { gl } = this;
+    bindAttributes(this.gl, program, this.attributes);
     gl.drawArrays(gl.TRIANGLES, 0, VertsPerParticle * this.pm.particleCount);
+    unbindAttributes(this.gl, program, this.attributes);
   }
 }

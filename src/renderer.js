@@ -173,9 +173,7 @@ export default class Renderer {
       false,
       this.projectionMatrix
     );
-    this.particleBuffer.bindBuffers(AttribLocations);
-    gl.disableVertexAttribArray(AttribLocations.aNormal);
-    this.particleBuffer.draw();
+    this.particleBuffer.draw(this.particleShaderContext.program);
   }
 
   _renderModel(model, shaderContext) {

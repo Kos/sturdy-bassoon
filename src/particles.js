@@ -19,7 +19,7 @@ export const Traits = {
   Count: iota
 };
 const ParticleSize = Traits.Count;
-export const OutputVertexSize = Traits.BufferedCount + 1;
+const OutputVertexSize = Traits.BufferedCount + 1;
 const OutputVertsPerParticle = 3;
 
 export class ParticleManager {
@@ -76,6 +76,19 @@ export class ParticleManager {
       0,
       this.particleCount * OutputVertsPerParticle * OutputVertexSize
     );
+  }
+
+  getAttributes(gl) {
+    const floatSizeInBytes = 4;
+    const stride = floatSizeInBytes * OutputVertexSize;
+    const offset = attr => (1 + Traits[attr]) * floatSizeInBytes;
+    return {
+      aLife: [3, gl.FLOAT, false, stride, offset("life")],
+      aVertexId: [1, gl.FLOAT, false, stride, 0],
+      aVertexPosition: [3, gl.FLOAT, false, stride, offset("x")],
+      aRotation: [1, gl.FLOAT, false, stride, offset("r")],
+      aSize: [1, gl.FLOAT, false, stride, offset("s")]
+    };
   }
 
   logParticles() {
