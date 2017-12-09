@@ -22,7 +22,7 @@ export default class Renderer {
     this.shaderContext = null;
 
     this.particleBuffer = new ParticleBuffer(this.gl);
-    this.particleBuffer.add(2, 3, 0, 0.001, 0.001);
+    this.particleBuffer.add(0, 2, 3, 0, 0, 0, 0.0001);
     window.requestAnimationFrame(() => this._setup());
     window.requestAnimationFrame(this._nextRender);
   }

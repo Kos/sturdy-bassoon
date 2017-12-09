@@ -19,8 +19,8 @@ export const Traits = {
   Count: iota
 };
 const ParticleSize = Traits.Count;
-const OutputVertexSize = Traits.BufferedCount + 1;
-const OutputVertsPerParticle = 4;
+export const OutputVertexSize = Traits.BufferedCount + 1;
+const OutputVertsPerParticle = 3;
 
 export class ParticleManager {
   constructor(capacity) {
@@ -64,11 +64,10 @@ export class ParticleManager {
     for (let i = 0; i < this.particleCount; ++i) {
       const particle = this.particleAt(i);
       const particleDataToCopy = particle.subarray(0, Traits.BufferedCount);
-      // Each particle is written 4 times, for each vertex.
+      // Each particle is written a few times, for each vertex.
       for (let j = 0; j < OutputVertsPerParticle; ++j) {
         const outputWriteIndex =
           (i * OutputVertsPerParticle + j) * OutputVertexSize;
-        console.log("write output", i, j, outputWriteIndex);
         this.output[outputWriteIndex] = j;
         this.output.set(particleDataToCopy, outputWriteIndex + 1);
       }
@@ -77,5 +76,12 @@ export class ParticleManager {
       0,
       this.particleCount * OutputVertsPerParticle * OutputVertexSize
     );
+  }
+
+  logParticles() {
+    for (let i = 0; i < this.particleCount; ++i) {
+      const particle = this.particleAt(i);
+      console.log("Particle", i, particle);
+    }
   }
 }
