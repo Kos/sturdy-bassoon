@@ -8,23 +8,29 @@ export const Traits = {
   r: iota++,
   s: iota++,
 
+  BufferedCount: iota,
+
   dx: iota++,
   dy: iota++,
   dz: iota++,
   dr: iota++,
   ds: iota++,
 
-  Count: iota++
+  Count: iota
 };
 const ParticleSize = Traits.Count;
+const OutputVertexSize = Traits.BufferedCount + 1;
+const OutputVertsPerParticle = 4;
 
 export class ParticleManager {
   constructor(capacity) {
     this.capacity = capacity;
-    this.data = new Float32Array(capacity * Traits.Count);
+    this.data = new Float32Array(capacity * ParticleSize);
     this.firstParticleIndex = 0;
     this.particleCount = 0;
-    this.output = [];
+    this.output = new Float32Array(
+      capacity * OutputVertsPerParticle * OutputVertexSize
+    );
   }
 
   addParticle(values) {
@@ -47,16 +53,29 @@ export class ParticleManager {
 
   particleAt(particleIndex) {
     let particleLocation = this.firstParticleIndex + particleIndex;
-    if (particleLocation > this.capacity) {
+    if (particleLocation >= this.capacity) {
       particleLocation -= this.capacity;
     }
     const dataIndex = particleLocation * ParticleSize;
     return this.data.subarray(dataIndex, dataIndex + ParticleSize);
   }
 
-  build() {
-    // TODO
-    // fill this.output
-    return this.output;
+  getVertexBuffer() {
+    for (let i = 0; i < this.particleCount; ++i) {
+      const particle = this.particleAt(i);
+      const particleDataToCopy = particle.subarray(0, Traits.BufferedCount);
+      // Each particle is written 4 times, for each vertex.
+      for (let j = 0; j < OutputVertsPerParticle; ++j) {
+        const outputWriteIndex =
+          (i * OutputVertsPerParticle + j) * OutputVertexSize;
+        console.log("write output", i, j, outputWriteIndex);
+        this.output[outputWriteIndex] = j;
+        this.output.set(particleDataToCopy, outputWriteIndex + 1);
+      }
+    }
+    return this.output.subarray(
+      0,
+      this.particleCount * OutputVertsPerParticle * OutputVertexSize
+    );
   }
 }
