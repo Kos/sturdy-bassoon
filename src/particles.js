@@ -6,6 +6,8 @@ export const Traits = {
   y: iota++,
   z: iota++,
   r: iota++,
+  g: iota++,
+  b: iota++,
   s: iota++,
 
   BufferedCount: iota,
@@ -14,6 +16,8 @@ export const Traits = {
   dy: iota++,
   dz: iota++,
   dr: iota++,
+  dg: iota++,
+  db: iota++,
   ds: iota++,
 
   Count: iota
